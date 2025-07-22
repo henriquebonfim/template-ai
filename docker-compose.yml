@@ -1,0 +1,55 @@
+services:
+  python-genai:
+    build:
+      context: ./py-genai
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./py-genai:/app
+    models:
+      - ai_model
+
+  node-genai:
+    build:
+      context: ./node-genai
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./node-genai:/app
+      - /app/node_modules
+    models:
+      - ai_model
+
+networks:
+  default:
+    name: template-ai-network
+    driver: bridge
+
+models:
+  ai_model:
+    model: ${LLM_MODEL_NAME}
