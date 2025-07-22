@@ -2,38 +2,19 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM python:3.12-slim
-
-WORKDIR /app
-
-# Create non-root user
-RUN adduser --disabled-password --gecos "" nonrootuser
-
-# Copy dependencies from builder
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Make sure directories exist
-RUN mkdir -p templates static/css static/js static/images && chown -R nonrootuser:nonrootuser /app
-
 # Copy application code
-COPY app.py requirements.txt ./
-COPY templates/ templates/
-COPY static/ static/
-
-# Switch to non-root user
-USER nonrootuser
+COPY . .
 
 # Expose port 8081 (matching docker-compose.yml)
 EXPOSE 8081
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
